@@ -228,6 +228,7 @@ PROMOTE_HANDLER = CommandHandler("promote", promote, pass_args=True, filters=Fil
 DEMOTE_HANDLER = CommandHandler("demote", demote, pass_args=True, filters=Filters.group)
 
 ADMINLIST_HANDLER = DisableAbleCommandHandler("adminlist", adminlist, filters=Filters.group)
+ADMINLIST_ALIAS_HANDLER = DisableAbleCommandHandler("admemelist", adminlist, filters=Filters.group)
 
 dispatcher.add_handler(PIN_HANDLER)
 dispatcher.add_handler(UNPIN_HANDLER)
@@ -235,3 +236,4 @@ dispatcher.add_handler(INVITE_HANDLER)
 dispatcher.add_handler(PROMOTE_HANDLER)
 dispatcher.add_handler(DEMOTE_HANDLER)
 dispatcher.add_handler(ADMINLIST_HANDLER)
+dispatcher.add_handler(ADMINLIST_ALIAS_HANDLER)
