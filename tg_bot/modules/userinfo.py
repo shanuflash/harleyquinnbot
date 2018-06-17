@@ -79,10 +79,10 @@ def set_about_bio(bot: Bot, update: Update):
         repl_message = message.reply_to_message
         user_id = repl_message.from_user.id
         if user_id == message.from_user.id:
-            message.reply_text("Ha, you can't set your own bio! You're at the mercy of others here...")
+            message.reply_text("Ha, you can't set your own bio! You're at the risk of others here... but what if...")
             return
         elif user_id == bot.id and sender.id not in SUDO_USERS:
-            message.reply_text("Erm... yeah, I only trust sudo users to set my bio.")
+            message.reply_text("Oh... yeah, I only trust good boies to set my bio.")
             return
 
         text = message.text
