@@ -1,10 +1,10 @@
-# tgbot and the Michael Stevens Bot
+# tgbot
 A modular telegram Python bot running on python3 with an sqlalchemy database.
 
 Originally a simple group management bot with multiple admin features, it has evolved, becoming extremely modular and 
 simple to use.
 
-Can be found on telegram as [Michael Stevens](https://t.me/michaelvsaucebot).
+Can be found on telegram as [Marie](https://t.me/BanhammerMarie_bot).
 
 Marie and I are moderating a [support group](https://t.me/MarieSupport), where you can ask for help setting up your
 bot, discover/request new features, report bugs, and stay in the loop whenever a new update is available. Of course
@@ -13,13 +13,13 @@ I'll also help when a database schema changes, and some table column needs to be
 Join the [news channel](https://t.me/MarieNews) if you just want to stay in the loop about new features or
 announcements.
 
-Alternatively, [find me on telegram](https://t.me/SonOfLars), and my awesome Shitpost-Module maker [deletescape!](https://t.me/deletescape) (Keep all support questions in the support chat, where more people can help you.)
+Alternatively, [find me on telegram](https://t.me/SonOfLars)! (Keep all support questions in the support chat, where more people can help you.)
 
 ## Starting the bot.
 
 Once you've setup your database and your configuration (see below) is complete, simply run:
 
-`python3 -m tg_bot` or in some cases `python3.6 -m tg_bot`
+`python3 -m tg_bot`
 
 
 ## Setting up the bot (Read this before trying to use!):
@@ -90,7 +90,7 @@ The following env variables are supported:
 
 Install the necessary python dependencies by moving to the project directory and running:
 
-`pip3 install -r requirements.txt` or in some cases `pip3.6 install -r requirements.txt` .
+`pip3 install -r requirements.txt`.
 
 This will install all necessary python packages.
 

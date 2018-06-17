@@ -18,21 +18,16 @@ from tg_bot.modules.helper_funcs.chat_status import is_user_admin
 from tg_bot.modules.helper_funcs.misc import paginate_modules
 
 PM_START_TEXT = """
-Hey VSauce, {} , my name is {}! If you have any questions on how to use me, read /help - and then head to @MarieSupport , cause this bot's based on Marie!
+Hi {}, my name is {}! If you have any questions on how to use me, read /help.
 
-I'm a group manager bot maintained by [this wonderful person](tg://user?id={}). I'm built in python3, using the \
-python-telegram-bot library, and am fully opensource - you can find what makes me tick \
-[here](gitlab.com/p8tgames/MichaelVsauceBot)! Check out the source, Marie, [here](github.com/PaulSonOfLars/tgbot)!
+I'm a group manager bot maintained by [this thug](tg://user?id={}). You can find what makes me tick \
+[here](github.com/shanutheflash/tgbot)!
 
-Feel free to submit pull requests on github, or to contact my support group, @MarieSupport, with any bugs, questions \
+Feel free to submit pull requests on github, or to contact [my master](t.me/shanuflash), with any bugs, questions \
 or feature requests you might have :)
-I also have a news channel, @MarieNews for announcements on new features, downtime, etc.
+I also have a news channel, @Jokerharleynews for announcements on new features, downtime, etc.
 
-You can find the list of available commands with /help.
-
-Heya, glad you are Interested in the Team! We are 3 people, maybe 4. ATechnoHazard made remote unban, Deletescape memes and Dogbin (checkout /donate) and MattRoot was a lot of help for owner
-
-If you're enjoying using me, and/or would like to help me survive in the wild and help my pro shitposter Till out, hit /donate to help fund/upgrade my VPS and/or help finance some sweets!
+If you're enjoying using me, and/or would like to help me survive in the wild, hit /donate to help fund/upgrade my VPS!
 """
 
 HELP_STRINGS = """
@@ -54,10 +49,10 @@ And the following:
 """.format(dispatcher.bot.first_name, "" if not ALLOW_EXCL else "\nAll commands can either be used with / or !.\n")
 
 DONATE_STRING = """Heya, glad to hear you want to donate!
-It took lots of work for [my creator](t.me/SonOfLars) and my shitposter [deletescape](t.me/deletescape) to get me to where I am now, and every donation helps \
-motivate him to make me even better. All the donation money will go to a better VPS to host me, and/or beer and some sweets \
-They're just poor devs, so every little helps!
-There are two ways of paying them; [PayPal SonOfLars](paypal.me/PaulSonOfLars), [Monzo SonOfLars](monzo.me/paulnionvestergaardlarsen). and [donate to Deletescape](donationfor.me)"""
+It took lots of work for [my creator](t.me/shanuflash) to get me to where I am now, and every donation helps \
+motivate him to make me even better. All the donation money will go to a better VPS to host me, and/or beer \
+(see his bio!). He's just a poor student, so every little helps!
+There are two ways of paying him; [PayPal](paypal.me/shanuflash)."""
 
 IMPORTED = {}
 MIGRATEABLE = []
@@ -437,7 +432,7 @@ def main():
 
     if WEBHOOK:
         LOGGER.info("Using webhooks.")
-        updater.start_webhook(listen="127.0.0.1",
+        updater.start_webhook(listen="0.0.0.0",
                               port=PORT,
                               url_path=TOKEN)
 
