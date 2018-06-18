@@ -321,6 +321,13 @@ def echo(bot: Bot, update: Update):
         message.reply_text(args[1], quote=False)
     message.delete()
 
+def ping(bot: Bot, update: Update):
+    start_time = time.time()
+    bot.send_message(update.effective_chat.id, "Pong!")
+    end_time = time.time()
+    ping_time = float(end_time - start_time)*1000000
+    update.effective_message.reply_text(" Ping speed was: {}s".format(ping_time))
+
 
 MARKDOWN_HELP = """
 Markdown is a very powerful formatting tool supported by telegram. {} has some enhancements, to make sure that \
