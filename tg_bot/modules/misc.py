@@ -325,7 +325,7 @@ def ping(bot: Bot, update: Update):
     start_time = time.time()
     bot.send_message(update.effective_chat.id, "Pong!")
     end_time = time.time()
-    ping_time = float(end_time - start_time)*1000000
+    ping_time = float(end_time - start_time)*1
     update.effective_message.reply_text(" Ping speed was: {}s".format(ping_time))
 
 
