@@ -84,14 +84,13 @@ def getlink(bot: Bot, update: Update, args: List[int]):
         chat_id = int(args[0])
     else:
         update.effective_message.reply_text("You don't seem to be referring to a chat")
-    chat = bot.getChat(chat_id)
+    chat = bot.get_chat(chat_id)
     bot_member = chat.get_member(bot.id)
     if bot_member.can_invite_users:
-        invitelink = bot.get_chat(chat_id).invite_link
+        invitelink = bot.exportChatInviteLink(chat_id)
         update.effective_message.reply_text(invitelink)
     else:
         update.effective_message.reply_text("I don't have access to the invite link!")
-
 
 @bot_admin
 def leavechat(bot: Bot, update: Update, args: List[int]):
