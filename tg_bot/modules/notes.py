@@ -5,7 +5,7 @@ from typing import Optional, List
 from telegram import MAX_MESSAGE_LENGTH, ParseMode, InlineKeyboardMarkup
 from telegram import Message, Update, Bot
 from telegram.error import BadRequest
-from telegram.ext import CommandHandler, RegexHandler, Filters
+from telegram.ext import CommandHandler, RegexHandler
 from telegram.ext.dispatcher import run_async
 from telegram.utils.helpers import escape_markdown
 
@@ -13,7 +13,7 @@ import tg_bot.modules.sql.notes_sql as sql
 from tg_bot import dispatcher, MESSAGE_DUMP, LOGGER
 from tg_bot.modules.disable import DisableAbleCommandHandler
 from tg_bot.modules.helper_funcs.chat_status import user_admin
-from tg_bot.modules.helper_funcs.misc import build_keyboard
+from tg_bot.modules.helper_funcs.misc import build_keyboard, revert_buttons
 from tg_bot.modules.helper_funcs.msg_types import get_note_type
 
 FILE_MATCHER = re.compile(r"^###file_id(!photo)?###:(.*?)(?:\s|$)")
@@ -31,13 +31,13 @@ ENUM_FUNC_MAP = {
 
 
 # Do not async
-def get(bot, update, notename, show_none=True):
+def get(bot, update, notename, show_none=True, no_format=False):
     chat_id = update.effective_chat.id
     note = sql.get_note(chat_id, notename)
     message = update.effective_message  # type: Optional[Message]
 
     if note:
-        # If not is replying to a message, reply to that message (unless its an error)
+        # If we're replying to a message, reply to that message (unless it's an error)
         if message.reply_to_message:
             reply_id = message.reply_to_message.message_id
         else:
@@ -67,20 +67,26 @@ def get(bot, update, notename, show_none=True):
                     else:
                         raise
         else:
+            text = note.value
             keyb = []
-            if note.msgtype == sql.Types.BUTTON_TEXT:
-                buttons = sql.get_buttons(chat_id, notename)
+            parseMode = ParseMode.MARKDOWN
+            buttons = sql.get_buttons(chat_id, notename)
+            if no_format:
+                parseMode = None
+                text += revert_buttons(buttons)
+            else:
                 keyb = build_keyboard(buttons)
+
             keyboard = InlineKeyboardMarkup(keyb)
 
             try:
                 if note.msgtype in (sql.Types.BUTTON_TEXT, sql.Types.TEXT):
-                    bot.send_message(chat_id, note.value, reply_to_message_id=reply_id,
-                                     parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True,
+                    bot.send_message(chat_id, text, reply_to_message_id=reply_id,
+                                     parse_mode=parseMode, disable_web_page_preview=True,
                                      reply_markup=keyboard)
                 else:
-                    ENUM_FUNC_MAP[note.msgtype](chat_id, note.file, caption=note.value, reply_to_message_id=reply_id,
-                                                parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True,
+                    ENUM_FUNC_MAP[note.msgtype](chat_id, note.file, caption=text, reply_to_message_id=reply_id,
+                                                parse_mode=parseMode, disable_web_page_preview=True,
                                                 reply_markup=keyboard)
 
             except BadRequest as excp:
@@ -105,9 +111,10 @@ def get(bot, update, notename, show_none=True):
 
 @run_async
 def cmd_get(bot: Bot, update: Update, args: List[str]):
-    if len(args) >= 1:
-        notename = args[0]
-        get(bot, update, notename, show_none=True)
+    if len(args) >= 2 and args[1].lower() == "noformat":
+        get(bot, update, args[0], show_none=True, no_format=True)
+    elif len(args) >= 1:
+        get(bot, update, args[0], show_none=True)
     else:
         update.effective_message.reply_text("Get rekt")
 
@@ -120,43 +127,11 @@ def hash_get(bot: Bot, update: Update):
     get(bot, update, no_hash, show_none=False)
 
 
-# TODO: FIX THIS
-@run_async
-@user_admin
-def save_replied(bot: Bot, update: Update):
-    chat_id = update.effective_chat.id
-    msg = update.effective_message
-
-    notename, text, data_type, content, buttons = get_note_type(msg, replied=True)
-
-    if data_type is None:
-        msg.reply_text("Dude, there's no note")
-        return
-
-    sql.add_note_to_db(chat_id, notename, text, data_type, buttons, content)
-    msg.reply_text("Yas! Added replied message {}".format(notename))
-
-    if msg.reply_to_message.from_user.is_bot:
-        if text:
-            msg.reply_text("Seems like you're trying to save a message from a bot. Unfortunately, "
-                           "bots can't forward bot messages, so I can't save the exact message. "
-                           "\nI'll save all the text I can, but if you want more, you'll have to "
-                           "forward the message yourself, and then save it.")
-        else:
-            msg.reply_text("Bots are kinda handicapped by telegram, making it hard for bots to "
-                           "interact with other bots, so I can't save this message "
-                           "like I usually would - do you mind forwarding it and "
-                           "then saving that new message? Thanks!")
-        return
-
-
 @run_async
 @user_admin
 def save(bot: Bot, update: Update):
     chat_id = update.effective_chat.id
     msg = update.effective_message  # type: Optional[Message]
-    raw_text = msg.text
-    args = raw_text.split(None, 2)  # use python's maxsplit to separate Cmd, note_name, and data
 
     note_name, text, data_type, content, buttons = get_note_type(msg)
 
@@ -168,6 +143,19 @@ def save(bot: Bot, update: Update):
 
     msg.reply_text(
         "Yas! Added {note_name}.\nGet it with /get {note_name}, or #{note_name}".format(note_name=note_name))
+
+    if msg.reply_to_message and msg.reply_to_message.from_user.is_bot:
+        if text:
+            msg.reply_text("Seems like you're trying to save a message from a bot. Unfortunately, "
+                           "bots can't forward bot messages, so I can't save the exact message. "
+                           "\nI'll save all the text I can, but if you want more, you'll have to "
+                           "forward the message yourself, and then save it.")
+        else:
+            msg.reply_text("Bots are kinda handicapped by telegram, making it hard for bots to "
+                           "interact with other bots, so I can't save this message "
+                           "like I usually would - do you mind forwarding it and "
+                           "then saving that new message? Thanks!")
+        return
 
 
 @run_async
@@ -239,9 +227,12 @@ def __chat_settings__(chat_id, user_id):
 
 
 __help__ = """
- - /get  <notename>: get the note with this notename
+ - /get <notename>: get the note with this notename
  - #<notename>: same as /get
  - /notes or /saved: list all saved notes in this chat
+
+If you would like to retrieve the contents of a note without any formatting, use `/get <notename> noformat`. This can \
+be useful when updating a current note.
 
 *Admin only:*
  - /save <notename> <notedata>: saves notedata as a note with name notename
@@ -256,15 +247,13 @@ __mod_name__ = "Notes"
 GET_HANDLER = CommandHandler("get", cmd_get, pass_args=True)
 HASH_GET_HANDLER = RegexHandler(r"^#[^\s]+", hash_get)
 
-SAVE_HANDLER = CommandHandler("save", save, filters=~Filters.reply)
-REPL_SAVE_HANDLER = CommandHandler("save", save_replied, filters=Filters.reply)
+SAVE_HANDLER = CommandHandler("save", save)
 DELETE_HANDLER = CommandHandler("clear", clear, pass_args=True)
 
 LIST_HANDLER = DisableAbleCommandHandler(["notes", "saved"], list_notes, admin_ok=True)
 
 dispatcher.add_handler(GET_HANDLER)
 dispatcher.add_handler(SAVE_HANDLER)
-dispatcher.add_handler(REPL_SAVE_HANDLER)
 dispatcher.add_handler(LIST_HANDLER)
 dispatcher.add_handler(DELETE_HANDLER)
 dispatcher.add_handler(HASH_GET_HANDLER)

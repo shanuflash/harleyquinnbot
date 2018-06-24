@@ -48,7 +48,7 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
                           can_post_messages=bot_member.can_post_messages,
                           can_edit_messages=bot_member.can_edit_messages,
                           can_delete_messages=bot_member.can_delete_messages,
-                          can_invite_users=bot_member.can_invite_users,
+                          # can_invite_users=bot_member.can_invite_users,
                           can_restrict_members=bot_member.can_restrict_members,
                           can_pin_messages=bot_member.can_pin_messages,
                           can_promote_members=bot_member.can_promote_members)
@@ -193,21 +193,10 @@ def adminlist(bot: Bot, update: Update):
     text = "Admins in *{}*:".format(update.effective_chat.title or "this chat")
     for admin in administrators:
         user = admin.user
-        status = admin.status
-        name = "[{}](tg://user?id={})".format(user.first_name + " " + (user.last_name or ""), user.id)
+        name = "[{}](tg://user?id={})".format(user.first_name + (user.last_name or ""), user.id)
         if user.username:
             name = escape_markdown("@" + user.username)
-        if status == "creator":
-            text += "\n 🔱 Creator:"
-            text += "\n` • `{} \n\n 🔰 Admin:".format(name)
-    for admin in administrators:
-        user = admin.user
-        status = admin.status
-        name = "[{}](tg://user?id={})".format(user.first_name + " " + (user.last_name or ""), user.id)
-        if user.username:
-            name = escape_markdown("@" + user.username)
-        if status == "administrator":
-            text += "\n` • `{}".format(name)
+        text += "\n - {}".format(name)
 
     update.effective_message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
@@ -219,6 +208,7 @@ def __chat_settings__(chat_id, user_id):
 
 __help__ = """
  - /adminlist: list of admins in the chat
+
 *Admin only:*
  - /pin: silently pins the message replied to - add 'loud' or 'notify' to give notifs to users.
  - /unpin: unpins the currently pinned message

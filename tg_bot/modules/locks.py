@@ -159,16 +159,12 @@ def unlock(bot: Bot, update: Update, args: List[str]) -> str:
                 members = users_sql.get_chat_members(chat.id)
                 if args[0] == "messages":
                     unrestr_members(bot, chat.id, members, media=False, other=False, previews=False)
-
                 elif args[0] == "media":
                     unrestr_members(bot, chat.id, members, other=False, previews=False)
-
                 elif args[0] == "other":
                     unrestr_members(bot, chat.id, members, previews=False)
-
                 elif args[0] == "previews":
                     unrestr_members(bot, chat.id, members)
-
                 elif args[0] == "all":
                     unrestr_members(bot, chat.id, members, True, True, True, True)
                 """
@@ -288,12 +284,10 @@ def __chat_settings__(chat_id, user_id):
 
 __help__ = """
  - /locktypes: a list of possible locktypes
-
 *Admin only:*
  - /lock <type>: lock items of a certain type (not available in private)
  - /unlock <type>: unlock items of a certain type (not available in private)
  - /locks: the current list of locks in this chat.
-
 Locks can be used to restrict a group's users.
 eg:
 Locking urls will auto-delete all messages with urls which haven't been whitelisted, locking stickers will delete all \
