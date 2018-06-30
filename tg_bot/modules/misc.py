@@ -92,7 +92,6 @@ RUN_STRINGS = (
     "Alas! Your neurotransmitters are no more working.",
     "Everyone has the right to be stupid but you are abusing the privilege.",
     "I'm sorry I hurt your feelings when I called you stupid. I thought you already knew that.",
-
 )
 
 SLAP_TEMPLATES = (
