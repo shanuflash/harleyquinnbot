@@ -90,10 +90,6 @@ def new_member(bot: Bot, update: Update):
                 update.effective_message.reply_text("Master is in the houseeee, let's get this party started!")
                 continue
 
-    	    elif new_mem.id in SUDO_USERS:
-        	    update.effective_message.reply_text("Wew, a sudo user arrived :D")
-                continue
-
             # Don't welcome yourself
             elif new_mem.id == bot.id:
                 continue
