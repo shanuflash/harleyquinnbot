@@ -12,7 +12,6 @@ import tg_bot.modules.sql.users_sql as sql
 from tg_bot import dispatcher, OWNER_ID, LOGGER
 from tg_bot.modules.helper_funcs.filters import CustomFilters
 
-
 @run_async
 def snipe(bot: Bot, update: Update, args: List[str]):
     try:
