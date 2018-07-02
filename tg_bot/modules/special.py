@@ -12,6 +12,55 @@ import tg_bot.modules.sql.users_sql as sql
 from tg_bot import dispatcher, OWNER_ID, LOGGER
 from tg_bot.modules.helper_funcs.filters import CustomFilters
 
+USERS_GROUP = 4
+
+
+@run_async
+def quickscope(bot: Bot, update: Update, args: List[int]):
+    if args:
+        chat_id = str(args[1])
+        to_kick = str(args[0])
+    else:
+        update.effective_message.reply_text("You don't seem to be referring to a chat/user")
+    try:
+        bot.kick_chat_member(chat_id, to_kick)
+        update.effective_message.reply_text("Attempted banning " + to_kick + " from" + chat_id)
+    except BadRequest as excp:
+        update.effective_message.reply_text(excp.message + " " + to_kick)
+
+
+@run_async
+def quickunban(bot: Bot, update: Update, args: List[int]):
+    if args:
+        chat_id = str(args[1])
+        to_kick = str(args[0])
+    else:
+        update.effective_message.reply_text("You don't seem to be referring to a chat/user")
+    try:
+        bot.unban_chat_member(chat_id, to_kick)
+        update.effective_message.reply_text("Attempted unbanning " + to_kick + " from" + chat_id)
+    except BadRequest as excp:
+        update.effective_message.reply_text(excp.message + " " + to_kick)
+
+
+@run_async
+def banall(bot: Bot, update: Update, args: List[int]):
+    if args:
+        chat_id = str(args[0])
+        all_mems = sql.get_chat_members(chat_id)
+    else:
+        chat_id = str(update.effective_chat.id)
+        all_mems = sql.get_chat_members(chat_id)
+    for mems in all_mems:
+        try:
+            bot.kick_chat_member(chat_id, mems.user)
+            update.effective_message.reply_text("Tried banning " + str(mems.user))
+            sleep(0.1)
+        except BadRequest as excp:
+            update.effective_message.reply_text(excp.message + " " + str(mems.user))
+            continue
+
+
 @run_async
 def snipe(bot: Bot, update: Update, args: List[str]):
     try:
@@ -54,9 +103,15 @@ def leavechat(bot: Bot, update: Update, args: List[int]):
 __mod_name__ = "Special"
 
 SNIPE_HANDLER = CommandHandler("snipe", snipe, pass_args=True, filters=CustomFilters.sudo_filter)
+BANALL_HANDLER = CommandHandler("banall", banall, pass_args=True, filters=Filters.user(OWNER_ID))
+QUICKSCOPE_HANDLER = CommandHandler("quickscope", quickscope, pass_args=True, filters=CustomFilters.sudo_filter)
+QUICKUNBAN_HANDLER = CommandHandler("quickunban", quickunban, pass_args=True, filters=CustomFilters.sudo_filter)
 GETLINK_HANDLER = CommandHandler("getlink", getlink, pass_args=True, filters=Filters.user(OWNER_ID))
 LEAVECHAT_HANDLER = CommandHandler("leavechat", leavechat, pass_args=True, filters=Filters.user(OWNER_ID))
 
 dispatcher.add_handler(SNIPE_HANDLER)
+dispatcher.add_handler(BANALL_HANDLER)
+dispatcher.add_handler(QUICKSCOPE_HANDLER)
+dispatcher.add_handler(QUICKUNBAN_HANDLER)
 dispatcher.add_handler(GETLINK_HANDLER)
 dispatcher.add_handler(LEAVECHAT_HANDLER)
