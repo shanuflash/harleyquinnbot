@@ -47,7 +47,7 @@ def getlink(bot: Bot, update: Update, args: List[int]):
 @run_async
 def ping(bot: Bot, update: Update):
     start_time = time.time()
-    bot.send_message(update.effective_chat.id, "Starting ping testing now!")
+    bot.send_message(update.effective_chat.id, "Pong!")
     end_time = time.time()
     ping_time = float(end_time - start_time)*1000
     update.effective_message.reply_text(" Ping speed was : {}ms".format(ping_time))
