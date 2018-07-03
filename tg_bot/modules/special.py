@@ -44,6 +44,14 @@ def getlink(bot: Bot, update: Update, args: List[int]):
     else:
         update.effective_message.reply_text("I don't have access to the invite link!")
 
+@run_async
+def ping(bot: Bot, update: Update):
+    start_time = time.time()
+    bot.send_message(update.effective_chat.id, "Starting ping testing now!")
+    end_time = time.time()
+    ping_time = float(end_time - start_time)*1000
+    update.effective_message.reply_text(" Ping speed was : {}ms".format(ping_time))
+
 @bot_admin
 def leavechat(bot: Bot, update: Update, args: List[int]):
     if args:
@@ -67,8 +75,10 @@ __mod_name__ = "Special"
 
 SNIPE_HANDLER = CommandHandler("snipe", snipe, pass_args=True, filters=CustomFilters.sudo_filter)
 GETLINK_HANDLER = CommandHandler("getlink", getlink, pass_args=True, filters=Filters.user(OWNER_ID))
+PING_HANDLER = CommandHandler("ping", ping)
 LEAVECHAT_HANDLER = CommandHandler("leavechat", leavechat, pass_args=True, filters=Filters.user(OWNER_ID))
 
 dispatcher.add_handler(SNIPE_HANDLER)
 dispatcher.add_handler(GETLINK_HANDLER)
+dispatcher.add_handler(PING_HANDLER)
 dispatcher.add_handler(LEAVECHAT_HANDLER)
