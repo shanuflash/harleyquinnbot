@@ -230,10 +230,8 @@ __help__ = """
  - /get <notename>: get the note with this notename
  - #<notename>: same as /get
  - /notes or /saved: list all saved notes in this chat
-
 If you would like to retrieve the contents of a note without any formatting, use `/get <notename> noformat`. This can \
 be useful when updating a current note.
-
 *Admin only:*
  - /save <notename> <notedata>: saves notedata as a note with name notename
 A button can be added to a note by using standard markdown link syntax - the link should just be prepended with a \
