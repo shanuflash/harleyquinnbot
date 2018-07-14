@@ -18,7 +18,7 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = 'sqldbtype://username:pw@hostname:port/db_name'  # needed for any database modules
     MESSAGE_DUMP = None  # needed to make sure 'save from' messages persist
     LOAD = []
-    NO_LOAD = ['translation', 'rss']
+    NO_LOAD = ['rss']
     WEBHOOK = False
     URL = None
 
@@ -26,15 +26,15 @@ class Config(object):
     SUDO_USERS = []  # List of id's (not usernames) for users which have sudo access to the bot.
     SUPPORT_USERS = []  # List of id's (not usernames) for users which are allowed to gban, but can also be banned.
     WHITELIST_USERS = []  # List of id's (not usernames) for users which WONT be banned/kicked by the bot.
-    DONATION_LINK = None  # EG, paypal
+    DONATION_LINK = None  # EG, paypal, etc...
     CERT_PATH = None
     PORT = 5000
-    DEL_CMDS = False  # Whether or not you should delete "blue text must click" commands
+    DEL_CMDS = False  # Whether or not you should delete "blue text must click"(commands starting with '/') commands
     STRICT_GBAN = False
     WORKERS = 8  # Number of subthreads to use. This is the recommended amount - see for yourself what works best!
-    BAN_STICKER = 'CAADAgADOwADPPEcAXkko5EB3YGYAg'  # banhammer marie sticker
-    ALLOW_EXCL = False  # Allow ! commands as well as /
-
+    BAN_STICKER = 'CAADAwADygMAAr-MkASqcLD1QeTS9QI'  # Sticker ID 
+    ALLOW_EXCL = False  # Allow ! commands as well as /, If True bot will respond to !commands
+    API_OPENWEATHER = "YOUR API KEY HERE"  # If you dont what this, use NO_LOAD = weather
 
 class Production(Config):
     LOGGER = False
