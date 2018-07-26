@@ -10,8 +10,9 @@ from telegram.ext.dispatcher import run_async
 from tg_bot.modules.helper_funcs.chat_status import is_user_ban_protected, bot_admin
 
 import tg_bot.modules.sql.users_sql as sql
-from tg_bot import dispatcher, OWNER_ID, LOGGER
+from tg_bot import dispatcher, OWNER_ID, LOGGER, SUDO_USERS, SUPPORT_USERS
 from tg_bot.modules.helper_funcs.filters import CustomFilters
+from tg_bot.modules.disable import DisableAbleCommandHandler
 
 
 @run_async
@@ -46,6 +47,25 @@ def getlink(bot: Bot, update: Update, args: List[int]):
         update.effective_message.reply_text("I don't have access to the invite link!")
 
 @run_async
+def slist(bot: Bot, update: Update):
+    text1 = "My sudo users are:"
+    for user_id in SUDO_USERS:
+        user = bot.get_chat(user_id)
+        name = "[{}](tg://user?id={})".format(user.first_name + (user.last_name or ""), user.id)
+        if user.username:
+            name = escape_markdown("@" + user.username)
+        text1 += "\n - {}".format(name)
+    text2 = "My support users are:"
+    for user_id in SUPPORT_USERS:
+        user = bot.get_chat(user_id)
+        name = "[{}](tg://user?id={})".format(user.first_name + (user.last_name or ""), user.id)
+        if user.username:
+            name = escape_markdown("@" + user.username)
+        text2 += "\n - {}".format(name)
+
+    update.effective_message.reply_text(text1 + "\n" + text2, parse_mode=ParseMode.MARKDOWN)
+
+@run_async
 def ping(bot: Bot, update: Update):
     start_time = time.time()
     bot.send_message(update.effective_chat.id, "Pong!")
@@ -76,10 +96,12 @@ __mod_name__ = "Special"
 
 SNIPE_HANDLER = CommandHandler("snipe", snipe, pass_args=True, filters=CustomFilters.sudo_filter)
 GETLINK_HANDLER = CommandHandler("getlink", getlink, pass_args=True, filters=Filters.user(OWNER_ID))
+SLIST_HANDLER = CommandHandler("slist", slist, filters=CustomFilters.sudo_filter)
 PING_HANDLER = CommandHandler("ping", ping)
 LEAVECHAT_HANDLER = CommandHandler("leavechat", leavechat, pass_args=True, filters=Filters.user(OWNER_ID))
 
 dispatcher.add_handler(SNIPE_HANDLER)
 dispatcher.add_handler(GETLINK_HANDLER)
+dispatcher.add_handler(SLIST_HANDLER)
 dispatcher.add_handler(PING_HANDLER)
 dispatcher.add_handler(LEAVECHAT_HANDLER)
