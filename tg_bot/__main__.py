@@ -21,12 +21,11 @@ PM_START_TEXT = """
 Hi {}, my name is {}! If you have any questions on how to use me, read /help.
 
 I'm a group manager bot maintained by [this thug](tg://user?id={}). You can find what makes me tick \
-[here](github.com/youngsinatraIII/Chester)!
+[here](github.com/shanutheflash/harleyquinnbot)!
 
-
-Feel free to submit pull requests on github, or to contact [my master](t.me/youngsinatraIII), with any bugs, questions \
+Feel free to submit pull requests on github, or to contact [my master](t.me/shanuflash), with any bugs, questions \
 or feature requests you might have :)
-I also have a news channel, (coming soon) for announcements on new features, downtime, etc.
+I also have a news channel, @Jokerharleynews for announcements on new features, downtime, etc.
 
 If you're enjoying using me, and/or would like to help me survive in the wild, hit /donate to help fund/upgrade my VPS!
 """
@@ -431,7 +430,7 @@ def main():
 
     if WEBHOOK:
         LOGGER.info("Using webhooks.")
-        updater.start_webhook(listen="127.0.0.1",
+        updater.start_webhook(listen="0.0.0.0",
                               port=PORT,
                               url_path=TOKEN)
 
