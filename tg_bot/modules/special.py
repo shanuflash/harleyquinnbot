@@ -98,7 +98,7 @@ __mod_name__ = "Special"
 SNIPE_HANDLER = CommandHandler("snipe", snipe, pass_args=True, filters=CustomFilters.sudo_filter)
 GETLINK_HANDLER = CommandHandler("getlink", getlink, pass_args=True, filters=Filters.user(OWNER_ID))
 SLIST_HANDLER = CommandHandler("slist", slist, filters=CustomFilters.sudo_filter)
-PING_HANDLER = CommandHandler("ping", ping)
+PING_HANDLER = DisableAbleCommandHandler("ping", ping)
 LEAVECHAT_HANDLER = CommandHandler("leavechat", leavechat, pass_args=True, filters=Filters.user(OWNER_ID))
 
 dispatcher.add_handler(SNIPE_HANDLER)
