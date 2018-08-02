@@ -1,4 +1,5 @@
 # ʜᴀʀʟᴇʏ ǫᴜɪɴɴ ʙᴏᴛ
+[<img src="https://raw.githubusercontent.com/shanuflash/harleyquinnbot/master/harley.png" align="right" width="240">](https://t.me/Harley_Quinn_Bot)
 A modular telegram Python bot running on python3 with an sqlalchemy database.
 
 Originally a simple group management bot with multiple admin features, it has evolved, becoming extremely modular and 
