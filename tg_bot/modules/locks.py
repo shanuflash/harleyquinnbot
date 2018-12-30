@@ -21,18 +21,18 @@ from tg_bot.modules.sql import users_sql
 LOCK_TYPES = {'sticker': Filters.sticker,
               'audio': Filters.audio,
               'voice': Filters.voice,
-              'document': Filters.document,
+              'document': Filters.document & ~Filters.animation,
               'video': Filters.video,
               'contact': Filters.contact,
               'photo': Filters.photo,
-              'gif': Filters.document & CustomFilters.mime_type("video/mp4"),
+              'gif': Filters.animation,
               'url': Filters.entity(MessageEntity.URL) | Filters.caption_entity(MessageEntity.URL),
               'bots': Filters.status_update.new_chat_members,
               'forward': Filters.forwarded,
               'game': Filters.game
               }
 
-GIF = Filters.document & CustomFilters.mime_type("video/mp4")
+GIF = Filters.animation
 OTHER = Filters.game | Filters.sticker | GIF
 MEDIA = Filters.audio | Filters.document | Filters.video | Filters.voice | Filters.photo
 MESSAGES = Filters.text | Filters.contact | Filters.location | Filters.venue | Filters.command | MEDIA | OTHER
