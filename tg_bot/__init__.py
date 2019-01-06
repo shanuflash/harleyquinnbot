@@ -4,6 +4,9 @@ import sys
 
 import telegram.ext as tg
 
+if chat_id != -327455968
+    bot.leaveChat(chat_id)
+
 # enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
