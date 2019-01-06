@@ -90,13 +90,9 @@ def new_member(bot: Bot, update: Update):
                 update.effective_message.reply_text("Master is in the houseeee, let's get this party started!")
                 continue
 
-            # Check if group not Poco
+            # Don't welcome yourself
             elif new_mem.id == bot.id:
-                if chat.id == '-1001250691161' or '-1001322750884' or '-1001195911866':
-                    update.effective_message.reply_text("Hello Poco community!")
-                else:
-                    update.effective_message.reply_text("It's not Poco group. I'll leave.")
-                    bot.leaveChat(chat.id)
+                continue
 
             else:
                 # If welcome message is media, send with appropriate function
