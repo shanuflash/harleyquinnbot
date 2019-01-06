@@ -5,7 +5,7 @@ A modular telegram Python bot running on python3 with an sqlalchemy database.
 Originally a simple group management bot with multiple admin features, it has evolved, becoming extremely modular and 
 simple to use.
 
-Can be found on telegram as [ʜᴀʀʟᴇʏ ǫᴜɪɴɴ](https://t.me/Harley_Quinn_Bot).
+Can be found on telegram as [ʜᴀʀʟᴇʏ ǫᴜɪɴɴ](https://t.me/Harley_Quinn_Bot)!
 
 Join the [news channel](https://t.me/JokerHarleyNews) if you just want to stay in the loop about new features or
 announcements.
