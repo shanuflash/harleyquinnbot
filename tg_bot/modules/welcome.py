@@ -92,11 +92,13 @@ def new_member(bot: Bot, update: Update):
 
             # Check if group not Poco
             elif new_mem.id == bot.id:
-                if chat.id == '-1001250691161' or '-1001180298540' or '-1001282665704' or '-1001157259165' or '-1001362988273':
+                #Allowed chats
+                a_chats = ['-1001250691161', '-1001461961772']
+                if str(chat.id) in a_chats:
                     update.effective_message.reply_text("Hello Pocophone community!")
                 else:
                     update.effective_message.reply_text("It's not a pocophone official group. I go away.")
-                    bot.send_sticker(chat.id, CAADAQADJwADkmY1IuiTMjVZ_RtuAg)
+                    bot.send_sticker(chat.id, 'CAADAQADJwADkmY1IuiTMjVZ_RtuAg')
                     bot.leaveChat(chat.id)
 
             else:
