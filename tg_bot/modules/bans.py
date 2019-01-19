@@ -60,7 +60,7 @@ def ban(bot: Bot, update: Update, args: List[str]) -> str:
 
     try:
         chat.kick_member(user_id)
-        bot.send_sticker(chat.id, BAN_STICKER)  # banhammer marie sticker
+        bot.send_video(chat.id, https://telegra.ph/file/d82113f9a646354b7c291.mp4)  # banhammer marie sticker
         message.reply_text("Banned!")
         return log
 
