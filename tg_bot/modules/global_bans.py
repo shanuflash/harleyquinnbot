@@ -124,7 +124,9 @@ def gban(bot: Bot, update: Update, args: List[str]):
             pass
 
     send_to_list(bot, SUDO_USERS + SUPPORT_USERS, "gban complete!")
+    bot.send_video("https://telegra.ph/file/d82113f9a646354b7c291.mp4")
     message.reply_text("Person has been gbanned.")
+    
 
 
 @run_async
