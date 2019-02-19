@@ -93,7 +93,7 @@ def new_member(bot: Bot, update: Update):
             # Check if group not Poco
             elif new_mem.id == bot.id:
                 #Allowed chats
-                a_chats = ['-1001250691161', '-1001461961772', '-1001180298540', '-1001282665704', '-1001157259165', '-1001362988273', '-1001419214122', '-1001154812671']
+                a_chats = ['-1001250691161', '-1001461961772', '-1001180298540', '-1001282665704', '-1001157259165', '-1001362988273', '-1001419214122', '-1001154812671', '-1001497553793']
                 if str(chat.id) in a_chats:
                     update.effective_message.reply_text("Hello Pocophone community!")
                 else:
