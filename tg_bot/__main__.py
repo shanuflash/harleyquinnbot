@@ -24,7 +24,10 @@ Feel free to submit pull requests on github, or to contact [my master](t.me/shan
 or feature requests you might have :)
 If you're enjoying using me, and/or would like to help me survive in the wild, hit /donate to help fund/upgrade my VPS.
 """
+kayo = f"google.com"
 
+        buttons.append(
+            [InlineKeyboardButton(kayo_btn, url=kayo)]
 
 HELP_STRINGS = """
 Hey there! My name is *{}*.
