@@ -1,82 +1,170 @@
-import json
-from io import BytesIO
+import html
+from typing import List
 
-from telegram import Bot, Update
+from telegram import Bot, Update, ParseMode
 from telegram.error import BadRequest
-from telegram.ext import CommandHandler, run_async
+from telegram.ext import MessageHandler, CommandHandler, Filters, run_async
+from telegram.utils.helpers import mention_html
 
-from tg_bot import dispatcher, LOGGER
-from tg_bot.__main__ import DATA_IMPORT
-from tg_bot.modules.helper_funcs.chat_status import user_admin
+from tg_bot import dispatcher, WHITELIST_USERS, TIGER_USERS
+from tg_bot.modules.helper_funcs.chat_status import is_user_admin, user_admin, can_restrict, connection_status
+from tg_bot.modules.log_channel import loggable
+from tg_bot.modules.sql import antiflood_sql as sql
+
+FLOOD_GROUP = 3
 
 
 @run_async
-@user_admin
-def import_data(bot: Bot, update: Update):
-    msg = update.effective_message
+@loggable
+def check_flood(bot: Bot, update: Update) -> str:
+    user = update.effective_user
     chat = update.effective_chat
-    # TODO: allow uploading doc with command, not just as reply
-    # only work with a doc
-    if msg.reply_to_message and msg.reply_to_message.document:
-        try:
-            file_info = bot.get_file(msg.reply_to_message.document.file_id)
-        except BadRequest:
-            msg.reply_text("Try downloading and reuploading the file as yourself before importing - this one seems "
-                           "to be iffy!")
-            return
+    msg = update.effective_message
+    log_message = ""
 
-        with BytesIO() as file:
-            file_info.download(out=file)
-            file.seek(0)
-            data = json.load(file)
+    if not user:  # ignore channels
+        return log_message
 
-        # only import one group
-        if len(data) > 1 and str(chat.id) not in data:
-            msg.reply_text("Theres more than one group here in this file, and none have the same chat id as this group "
-                           "- how do I choose what to import?")
-            return
+    # ignore admins and whitelists
+    if (is_user_admin(chat, user.id) 
+            or user.id in WHITELIST_USERS
+            or user.id in TIGER_USERS):
+        sql.update_flood(chat.id, None)
+        return log_message
 
-        # Select data source
-        if str(chat.id) in data:
-            data = data[str(chat.id)]['hashes']
-        else:
-            data = data[list(data.keys())[0]]['hashes']
+    should_ban = sql.update_flood(chat.id, user.id)
+    if not should_ban:
+        return log_message
 
-        try:
-            for mod in DATA_IMPORT:
-                mod.__import_data__(str(chat.id), data)
-        except Exception:
-            msg.reply_text("An exception occured while restoring your data. The process may not be complete. If "
-                           "you're having issues with this, message @OnePunchSupport with your backup file so the "
-                           "issue can be debugged. My owners would be happy to help, and every bug "
-                           "reported makes me better! Thanks! :)")
-            LOGGER.exception("Import for chatid %s with name %s failed.", str(chat.id), str(chat.title))
-            return
+    try:
+        bot.restrict_chat_member(chat.id, user.id, can_send_messages=False)
+        msg.reply_text(f"*mutes {mention_html(user.id, user.first_name)} permanently*\nStop flooding the group!", parse_mode=ParseMode.HTML)
+        log_message = (f"<b>{html.escape(chat.title)}:</b>\n"
+                       f"#MUTED\n"
+                       f"<b>User:</b> {mention_html(user.id, user.first_name)}\n"
+                       f"Flooded the group.\nMuted until an admin unmutes")
 
-        # TODO: some of that link logic
-        # NOTE: consider default permissions stuff?
-        msg.reply_text("Backup fully imported. Welcome back! :D")
+        return log_message
+
+    except BadRequest:
+        msg.reply_text("I can't kick people here, give me permissions first! Until then, I'll disable antiflood.")
+        sql.set_flood(chat.id, 0)
+        log_message = ("<b>{chat.title}:</b>\n"
+                       "#INFO\n"
+                       "Don't have kick permissions, so automatically disabled antiflood.")
+
+        return log_message
 
 
 @run_async
+@connection_status
 @user_admin
-def export_data(bot: Bot, update: Update):
-    msg = update.effective_message
-    msg.reply_text("Doesn't work yet.")
+@can_restrict
+@loggable
+def set_flood(bot: Bot, update: Update, args: List[str]) -> str:
+    chat = update.effective_chat
+    user = update.effective_user
+    message = update.effective_message
+    log_message = ""
+
+    update_chat_title = chat.title
+    message_chat_title = update.effective_message.chat.title
+
+    if update_chat_title == message_chat_title:
+        chat_name = ""
+    else:
+        chat_name = f" in <b>{update_chat_title}</b>"
+
+    if len(args) >= 1:
+
+        val = args[0].lower()
+
+        if val == "off" or val == "no" or val == "0":
+            sql.set_flood(chat.id, 0)
+            message.reply_text("Antiflood has been disabled{}.".format(chat_name), parse_mode=ParseMode.HTML)
+
+        elif val.isdigit():
+            amount = int(val)
+            if amount <= 0:
+                sql.set_flood(chat.id, 0)
+                message.reply_text("Antiflood has been disabled{}.".format(chat_name), parse_mode=ParseMode.HTML)
+                log_message = (f"<b>{html.escape(chat.title)}:</b>\n"
+                               f"#SETFLOOD\n"
+                               f"<b>Admin</b>: {mention_html(user.id, user.first_name)}\n"
+                               f"Disabled antiflood.")
+
+                return log_message
+            elif amount < 3:
+                message.reply_text("Antiflood has to be either 0 (disabled), or a number bigger than 3!")
+                return log_message
+
+            else:
+                sql.set_flood(chat.id, amount)
+                message.reply_text("Antiflood has been updated and set to {}{}".format(amount, chat_name),
+                                   parse_mode=ParseMode.HTML)
+                log_message = (f"<b>{html.escape(chat.title)}:</b>\n"
+                               f"#SETFLOOD\n"
+                               f"<b>Admin</b>: {mention_html(user.id, user.first_name)}\n"
+                               f"Set antiflood to <code>{amount}</code>.")
+
+                return log_message
+        else:
+            message.reply_text("Unrecognised argument - please use a number, 'off', or 'no'.")
+
+    return log_message
+
+
+@run_async
+@connection_status
+def flood(bot: Bot, update: Update):
+    chat = update.effective_chat
+    update_chat_title = chat.title
+    message_chat_title = update.effective_message.chat.title
+
+    if update_chat_title == message_chat_title:
+        chat_name = ""
+    else:
+        chat_name = f" in <b>{update_chat_title}</b>"
+
+    limit = sql.get_flood_limit(chat.id)
+
+    if limit == 0:
+        update.effective_message.reply_text(f"I'm not currently enforcing flood control{chat_name}!",
+                                            parse_mode=ParseMode.HTML)
+    else:
+        update.effective_message.reply_text(f"I'm currently muting users if they send "
+                                            f"more than {limit} consecutive messages{chat_name}.",
+                                            parse_mode=ParseMode.HTML)
+
+
+def __migrate__(old_chat_id, new_chat_id):
+    sql.migrate_chat(old_chat_id, new_chat_id)
+
+
+def __chat_settings__(chat_id, user_id):
+    limit = sql.get_flood_limit(chat_id)
+    if limit == 0:
+        return "*Not* currently enforcing flood control."
+    else:
+        return "Antiflood is set to `{}` messages.".format(limit)
 
 
 __help__ = """
+ - /flood: Get the current flood control setting
+
 *Admin only:*
- - /import: reply to a group butler backup file to import as much as possible, making the transfer super simple! Note \
-that files/photos can't be imported due to telegram restrictions.
- - /export: !!! This isn't a command yet, but should be coming soon!
+ - /setflood <int/'no'/'off'>: enables or disables flood control
+ Example: /setflood 10
+ This will mute users if they send more than 10 messages in a row, bots are ignored.
 """
 
-IMPORT_HANDLER = CommandHandler("import", import_data)
-EXPORT_HANDLER = CommandHandler("export", export_data)
+FLOOD_BAN_HANDLER = MessageHandler(Filters.all & ~Filters.status_update & Filters.group, check_flood)
+SET_FLOOD_HANDLER = CommandHandler("setflood", set_flood, pass_args=True)
+FLOOD_HANDLER = CommandHandler("flood", flood)
 
-dispatcher.add_handler(IMPORT_HANDLER)
-dispatcher.add_handler(EXPORT_HANDLER)
+dispatcher.add_handler(FLOOD_BAN_HANDLER, FLOOD_GROUP)
+dispatcher.add_handler(SET_FLOOD_HANDLER)
+dispatcher.add_handler(FLOOD_HANDLER)
 
-__mod_name__ = "Backups"
-__handlers__ = [IMPORT_HANDLER, EXPORT_HANDLER]
+__mod_name__ = "AntiFlood"
+__handlers__ = [(FLOOD_BAN_HANDLER, FLOOD_GROUP), SET_FLOOD_HANDLER, FLOOD_HANDLER]
