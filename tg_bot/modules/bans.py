@@ -280,6 +280,49 @@ def unban(bot: Bot, update: Update, args: List[str]) -> str:
     return log
 
 
+@run_async
+@connection_status
+@bot_admin
+@can_restrict
+@gloggable
+def selfunban(bot: Bot, update: Update, args: List[str]) -> str:
+    message = update.effective_message
+    user = update.effective_user
+
+    if user.id not in SUDO_USERS or user.id not in TIGER_USERS:
+        return
+
+    try:
+        chat_id = int(args[0])
+    except:
+        message.reply_text("Give a valid chat ID.")
+        return
+
+    chat = bot.getChat(chat_id)
+
+    try:
+        member = chat.get_member(user.id)
+    except BadRequest as excp:
+        if excp.message == "User not found":
+            message.reply_text("I can't seem to find this user.")
+            return
+        else:
+            raise
+
+    if is_user_in_chat(chat, user.id):
+        message.reply_text("Aren't you already in the chat??")
+        return
+
+    chat.unban_member(user.id)
+    message.reply_text("Yep, I have unbanned you.")
+
+    log = (f"<b>{html.escape(chat.title)}:</b>\n"
+           f"#UNBANNED\n"
+           f"<b>User:</b> {mention_html(member.user.id, member.user.first_name)}")
+
+    return log
+
+
 __help__ = """
  - /kickme: kicks the user who issued the command
 
@@ -294,13 +337,15 @@ BAN_HANDLER = CommandHandler("ban", ban, pass_args=True)
 TEMPBAN_HANDLER = CommandHandler(["tban", "tempban"], temp_ban, pass_args=True)
 KICK_HANDLER = CommandHandler("kick", kick, pass_args=True)
 UNBAN_HANDLER = CommandHandler("unban", unban, pass_args=True)
+ROAR_HANDLER = CommandHandler("roar", selfunban, pass_args=True)
 KICKME_HANDLER = DisableAbleCommandHandler("kickme", kickme, filters=Filters.group)
 
 dispatcher.add_handler(BAN_HANDLER)
 dispatcher.add_handler(TEMPBAN_HANDLER)
 dispatcher.add_handler(KICK_HANDLER)
 dispatcher.add_handler(UNBAN_HANDLER)
+dispatcher.add_handler(ROAR_HANDLER)
 dispatcher.add_handler(KICKME_HANDLER)
 
 __mod_name__ = "Bans"
-__handlers__ = [BAN_HANDLER, TEMPBAN_HANDLER, KICK_HANDLER, UNBAN_HANDLER, KICKME_HANDLER]
+__handlers__ = [BAN_HANDLER, TEMPBAN_HANDLER, KICK_HANDLER, UNBAN_HANDLER, ROAR_HANDLER, KICKME_HANDLER]

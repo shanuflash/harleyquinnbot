@@ -1,10 +1,10 @@
-from math import ceil
 from typing import List, Dict
 
+from math import ceil
 from telegram import MAX_MESSAGE_LENGTH, InlineKeyboardButton, Bot, ParseMode
 from telegram.error import TelegramError
 
-from tg_bot import LOAD, NO_LOAD
+from tg_bot import NO_LOAD
 
 
 class EqInlineKeyboardButton(InlineKeyboardButton):
@@ -106,4 +106,4 @@ def revert_buttons(buttons):
 
 
 def is_module_loaded(name):
-    return (not LOAD or name in LOAD) and name not in NO_LOAD
+    return name not in NO_LOAD

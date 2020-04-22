@@ -18,11 +18,18 @@ from tg_bot.modules.helper_funcs.misc import paginate_modules
 
 PM_START_TEXT = """
 Hi {}, my name is {}! If you have any questions on how to use me, read /help.
-I'm a group manager bot maintained by [this thug](tg://user?id={}). You can find what makes me tick \
-[here](github.com/shanuflash/tgbot)!
-Feel free to submit pull requests on github, or to contact [my master](t.me/shanuflash), with any bugs, questions \
+
+I'm a group manager bot maintained by [this thug](t.me/studyrisefoundation).
+
+Feel free to submit pull requests on github, or to contact [my master](t.me/studyrisefoundation), with any bugs, questions \
 or feature requests you might have :)
+
 If you're enjoying using me, and/or would like to help me survive in the wild, hit /donate to help fund/upgrade my VPS.
+
+My support group: @groupdonsupport!
+My support channel: @groupdonorg!
+
+[Click here](t.me/groupdonbot?startgroup=true) to add me tou your groups.
 """
 
 HELP_STRINGS = """
@@ -43,7 +50,7 @@ the things I can help you with.
 And the following:
 """.format(dispatcher.bot.first_name, "" if not ALLOW_EXCL else "\nAll commands can either be used with / or !.\n")
 
-DONATE_STRING = """ WIP """
+DONATE_STRING = """  """
 
 IMPORTED = {}
 MIGRATEABLE = []

@@ -8,7 +8,7 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, run_async, Filters
 from telegram.utils.helpers import mention_html
 
-from tg_bot import dispatcher, OWNER_ID, SUDO_USERS, SUPPORT_USERS
+from tg_bot import dispatcher, OWNER_ID, SUDO_USERS, SUPPORT_USERS, DEV_USERS, TIGER_USERS, WHITELIST_USERS
 from tg_bot.__main__ import STATS, USER_INFO, TOKEN
 from tg_bot.modules.disable import DisableAbleCommandHandler
 from tg_bot.modules.helper_funcs.chat_status import user_admin, sudo_plus
@@ -18,20 +18,24 @@ from tg_bot.modules.helper_funcs.extraction import extract_user
 MARKDOWN_HELP = f"""
 Markdown is a very powerful formatting tool supported by telegram. {dispatcher.bot.first_name} has some enhancements, to make sure that \
 saved messages are correctly parsed, and to allow you to create buttons.
+
 - <code>_italic_</code>: wrapping text with '_' will produce italic text
 - <code>*bold*</code>: wrapping text with '*' will produce bold text
 - <code>`code`</code>: wrapping text with '`' will produce monospaced text, also known as 'code'
 - <code>[sometext](someURL)</code>: this will create a link - the message will just show <code>sometext</code>, \
 and tapping on it will open the page at <code>someURL</code>.
 EG: <code>[test](example.com)</code>
+
 - <code>[buttontext](buttonurl:someURL)</code>: this is a special enhancement to allow users to have telegram \
 buttons in their markdown. <code>buttontext</code> will be what is displayed on the button, and <code>someurl</code> \
 will be the url which is opened.
 EG: <code>[This is a button](buttonurl:example.com)</code>
+
 If you want multiple buttons on the same line, use :same, as such:
 <code>[one](buttonurl://example.com)
 [two](buttonurl://google.com:same)</code>
 This will create two buttons on a single line, instead of one button per line.
+
 Keep in mind that your message <b>MUST</b> contain some text other than just a button!
 """
 
@@ -74,100 +78,92 @@ def get_id(bot: Bot, update: Update, args: List[str]):
 
 
 @run_async
-def get_time(bot: Bot, update: Update, args: List[str]):
-    location = " ".join(args)
-    if location.lower() == bot.first_name.lower():
-        update.effective_message.reply_text("Its always banhammer time for me!")
-        bot.send_sticker(update.effective_chat.id, BAN_STICKER)
-        return
-
-    res = requests.get(GMAPS_LOC, params=dict(address=location))
-
-    if res.status_code == 200:
-        loc = json.loads(res.text)
-        if loc.get('status') == 'OK':
-            lat = loc['results'][0]['geometry']['location']['lat']
-            long = loc['results'][0]['geometry']['location']['lng']
-
-            country = None
-            city = None
-
-            address_parts = loc['results'][0]['address_components']
-            for part in address_parts:
-                if 'country' in part['types']:
-                    country = part.get('long_name')
-                if 'administrative_area_level_1' in part['types'] and not city:
-                    city = part.get('long_name')
-                if 'locality' in part['types']:
-                    city = part.get('long_name')
-
-            if city and country:
-                location = "{}, {}".format(city, country)
-            elif country:
-                location = country
-
-            timenow = int(datetime.utcnow().timestamp())
-            res = requests.get(GMAPS_TIME, params=dict(location="{},{}".format(lat, long), timestamp=timenow))
-            if res.status_code == 200:
-                offset = json.loads(res.text)['dstOffset']
-                timestamp = json.loads(res.text)['rawOffset']
-                time_there = datetime.fromtimestamp(timenow + timestamp + offset).strftime("%H:%M:%S on %A %d %B")
-                update.message.reply_text("It's {} in {}".format(time_there, location))
+def gifid(bot: Bot, update: Update):
+    msg = update.effective_message
+    if msg.reply_to_message and msg.reply_to_message.animation:
+        update.effective_message.reply_text(f"Gif ID:\n<code>{msg.reply_to_message.animation.file_id}</code>",
+                                            parse_mode=ParseMode.HTML)
+    else:
+        update.effective_message.reply_text("Please reply to a gif to get its ID.")
 
 
 @run_async
 def info(bot: Bot, update: Update, args: List[str]):
-    msg = update.effective_message  # type: Optional[Message]
+    message = update.effective_message
+    chat = update.effective_chat
     user_id = extract_user(update.effective_message, args)
 
     if user_id:
         user = bot.get_chat(user_id)
 
-    elif not msg.reply_to_message and not args:
-        user = msg.from_user
+    elif not message.reply_to_message and not args:
+        user = message.from_user
 
-    elif not msg.reply_to_message and (not args or (
-            len(args) >= 1 and not args[0].startswith("@") and not args[0].isdigit() and not msg.parse_entities(
+    elif not message.reply_to_message and (not args or (
+            len(args) >= 1 and not args[0].startswith("@") and not args[0].isdigit() and not message.parse_entities(
         [MessageEntity.TEXT_MENTION]))):
-        msg.reply_text("I can't extract a user from this.")
+        message.reply_text("I can't extract a user from this.")
         return
 
     else:
         return
 
-    text = "<b>User info</b>:" \
-           "\nID: <code>{}</code>" \
-           "\nFirst Name: {}".format(user.id, html.escape(user.first_name))
+    text = (f"<b>Characteristics:</b>\n"
+            f"ID: <code>{user.id}</code>\n"
+            f"First Name: {html.escape(user.first_name)}")
 
     if user.last_name:
-        text += "\nLast Name: {}".format(html.escape(user.last_name))
+        text += f"\nLast Name: {html.escape(user.last_name)}"
 
     if user.username:
-        text += "\nUsername: @{}".format(html.escape(user.username))
+        text += f"\nUsername: @{html.escape(user.username)}"
 
-    text += "\nPermanent user link: {}".format(mention_html(user.id, "link"))
+    text += f"\nPermanent user link: {mention_html(user.id, 'link')}"
+
+    disaster_level_present = False
 
     if user.id == OWNER_ID:
-        text += "\n\nThis person is my owner - I would never do anything against them!"
-    else:
-        if user.id in SUDO_USERS:
-            text += "\nThis person is one of my sudo users! " \
-                    "Nearly as powerful as my owner - so watch it."
-        else:
-            if user.id in SUPPORT_USERS:
-                text += "\nThis person is one of my support users! " \
-                        "Not quite a sudo user, but can still gban you off the map."
+        text += "\nThe Disaster level of this person is 'God'."
+        disaster_level_present = True
+    elif user.id in DEV_USERS:
+        text += "\nThis member is one of 'Hero Association'."
+        disaster_level_present = True
+    elif user.id in SUDO_USERS:
+        text += "\nThe Disaster level of this person is 'Dragon'."
+        disaster_level_present = True
+    elif user.id in SUPPORT_USERS:
+        text += "\nThe Disaster level of this person is 'Demon'."
+        disaster_level_present = True
+    elif user.id in TIGER_USERS:
+        text += "\nThe Disaster level of this person is 'Tiger'."
+        disaster_level_present = True
+    elif user.id in WHITELIST_USERS:
+        text += "\nThe Disaster level of this person is 'Wolf'."
+        disaster_level_present = True
 
-            if user.id in WHITELIST_USERS:
-                text += "\nThis person has been whitelisted! " \
-                        "That means I'm not allowed to ban/kick them."
+    if disaster_level_present:
+        text += ' [<a href="http://t.me/{}?start=disasters">?</a>]'.format(bot.username)
+
+    try:
+        user_member = chat.get_member(user.id)
+        if user_member.status == 'administrator':
+            result = requests.post(f"https://api.telegram.org/bot{TOKEN}/getChatMember?chat_id={chat.id}&user_id={user.id}")
+            result = result.json()["result"]
+            if "custom_title" in result.keys():
+                custom_title = result['custom_title']
+                text += f"\n\nThis user holds the title <b>{custom_title}</b> here."
+    except BadRequest:
+        pass
 
     for mod in USER_INFO:
-        mod_info = mod.__user_info__(user.id).strip()
+        try:
+            mod_info = mod.__user_info__(user.id).strip()
+        except TypeError:
+            mod_info = mod.__user_info__(user.id, chat.id).strip()
         if mod_info:
             text += "\n\n" + mod_info
 
-    update.effective_message.reply_text(text, parse_mode=ParseMode.HTML)
+    update.effective_message.reply_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 
 @run_async
@@ -203,20 +199,20 @@ def stats(bot: Bot, update: Update):
 
 __help__ = """
  - /id: get the current group id. If used by replying to a message, gets that user's id.
- - /time <place>: gives the local time at the given place.
+ - /gifid: reply to a gif to me to tell you its file ID.
  - /info: get information about a user.
  - /markdownhelp: quick summary of how markdown works in telegram - can only be called in private chats.
 """
 
 ID_HANDLER = DisableAbleCommandHandler("id", get_id, pass_args=True)
-TIME_HANDLER = DisableAbleCommandHandler("time", time)
+GIFID_HANDLER = DisableAbleCommandHandler("gifid", gifid)
 INFO_HANDLER = DisableAbleCommandHandler("info", info, pass_args=True)
 ECHO_HANDLER = DisableAbleCommandHandler("echo", echo, filters=Filters.group)
 MD_HELP_HANDLER = CommandHandler("markdownhelp", markdown_help, filters=Filters.private)
 STATS_HANDLER = CommandHandler("stats", stats)
 
 dispatcher.add_handler(ID_HANDLER)
-dispatcher.add_handler(TIME_HANDLER)
+dispatcher.add_handler(GIFID_HANDLER)
 dispatcher.add_handler(INFO_HANDLER)
 dispatcher.add_handler(ECHO_HANDLER)
 dispatcher.add_handler(MD_HELP_HANDLER)
@@ -224,4 +220,4 @@ dispatcher.add_handler(STATS_HANDLER)
 
 __mod_name__ = "Misc"
 __command_list__ = ["id", "info", "echo"]
-__handlers__ = [ID_HANDLER, TIME_HANDLER, INFO_HANDLER, ECHO_HANDLER, MD_HELP_HANDLER, STATS_HANDLER]
+__handlers__ = [ID_HANDLER, GIFID_HANDLER, INFO_HANDLER, ECHO_HANDLER, MD_HELP_HANDLER, STATS_HANDLER]
