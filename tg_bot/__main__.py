@@ -1,13 +1,11 @@
-import datetime
 import importlib
 import re
 from typing import Optional, List
 
-from telegram import Message, Chat, Update, Bot, User
-from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Bot, Update, ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.error import Unauthorized, BadRequest, TimedOut, NetworkError, ChatMigrated, TelegramError
-from telegram.ext import CommandHandler, Filters, MessageHandler, CallbackQueryHandler
-from telegram.ext.dispatcher import run_async, DispatcherHandlerStop, Dispatcher
+from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, Filters
+from telegram.ext.dispatcher import run_async, DispatcherHandlerStop
 from telegram.utils.helpers import escape_markdown
 
 from tg_bot import dispatcher, updater, TOKEN, WEBHOOK, OWNER_ID, DONATION_LINK, CERT_PATH, PORT, URL, LOGGER, \
@@ -20,16 +18,13 @@ from tg_bot.modules.helper_funcs.misc import paginate_modules
 
 PM_START_TEXT = """
 Hi {}, my name is {}! If you have any questions on how to use me, read /help.
-
 I'm a group manager bot maintained by [this thug](tg://user?id={}). You can find what makes me tick \
 [here](github.com/shanuflash/tgbot)!
-
 Feel free to submit pull requests on github, or to contact [my master](t.me/shanuflash), with any bugs, questions \
 or feature requests you might have :)
-Join our support group for active discussions @PocophoneGlobalOfficial, For faster updates on roms nad kernels join @PocoPhoneGlobalUpdates.
-
-If you're enjoying using me, and/or would like to help me survive in the wild, hit /donate to help fund/upgrade my VPS!
+If you're enjoying using me, and/or would like to help me survive in the wild, hit /donate to help fund/upgrade my VPS.
 """
+
 
 HELP_STRINGS = """
 Hey there! My name is *{}*.
@@ -43,15 +38,13 @@ the things I can help you with.
  - /settings:
    - in PM: will send you your settings for all supported modules.
    - in a group: will redirect you to pm, with all that chat's settings.
+
+
 {}
 And the following:
 """.format(dispatcher.bot.first_name, "" if not ALLOW_EXCL else "\nAll commands can either be used with / or !.\n")
 
-DONATE_STRING = """Heya, glad to hear you want to donate!
-It took lots of work for [my creator](t.me/shanuflash) to get me to where I am now, and every donation helps \
-motivate him to make me even better. All the donation money will go to a better VPS to host me, and/or beer \
-(see his bio!). He's just a poor student, so every little helps!
-You can pay him by: [PayPal](paypal.me/shanuflash)."""
+DONATE_STRING = """ WIP """
 
 IMPORTED = {}
 MIGRATEABLE = []
@@ -117,14 +110,14 @@ def test(bot: Bot, update: Update):
     update.effective_message.reply_text("This person edited a message")
     print(update.effective_message)
 
-
 @run_async
 def start(bot: Bot, update: Update, args: List[str]):
     if update.effective_chat.type == "private":
         if len(args) >= 1:
             if args[0].lower() == "help":
                 send_help(update.effective_chat.id, HELP_STRINGS)
-
+            elif args[0].lower() == "disasters":
+                IMPORTED["disasters"].send_disasters(update)
             elif args[0].lower().startswith("stngs_"):
                 match = re.match("stngs_(.*)", args[0].lower())
                 chat = dispatcher.bot.getChat(match.group(1))
@@ -141,7 +134,7 @@ def start(bot: Bot, update: Update, args: List[str]):
             first_name = update.effective_user.first_name
             update.effective_message.reply_text(
                 PM_START_TEXT.format(escape_markdown(first_name), escape_markdown(bot.first_name), OWNER_ID),
-                parse_mode=ParseMode.MARKDOWN)
+                parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
     else:
         update.effective_message.reply_text("Yo, whadup?")
 
@@ -290,8 +283,7 @@ def settings_button(bot: Bot, update: Update):
             module = mod_match.group(2)
             chat = bot.get_chat(chat_id)
             text = "*{}* has the following settings for the *{}* module:\n\n".format(escape_markdown(chat.title),
-                                                                                     CHAT_SETTINGS[
-                                                                                         module].__mod_name__) + \
+                                                                                     CHAT_SETTINGS[module].__mod_name__) + \
                    CHAT_SETTINGS[module].__chat_settings__(chat_id, user.id)
             query.message.reply_text(text=text,
                                      parse_mode=ParseMode.MARKDOWN,
@@ -430,9 +422,6 @@ def main():
 
     # dispatcher.add_error_handler(error_callback)
 
-    # add antiflood processor
-    Dispatcher.process_update = process_update
-    
     if WEBHOOK:
         LOGGER.info("Using webhooks.")
         updater.start_webhook(listen="127.0.0.1",
@@ -450,61 +439,6 @@ def main():
         updater.start_polling(timeout=15, read_latency=4)
 
     updater.idle()
-
-
-CHATS_CNT = {}
-CHATS_TIME = {}
-
-
-def process_update(self, update):
-    # An error happened while polling
-    if isinstance(update, TelegramError):
-        try:
-            self.dispatch_error(None, update)
-        except Exception:
-            self.logger.exception('An uncaught error was raised while handling the error')
-        return
-
-    now = datetime.datetime.utcnow()
-    cnt = CHATS_CNT.get(update.effective_chat.id, 0)
-
-    t = CHATS_TIME.get(update.effective_chat.id, datetime.datetime(1970, 1, 1))
-    if t and now > t + datetime.timedelta(0, 1):
-        CHATS_TIME[update.effective_chat.id] = now
-        cnt = 0
-    else:
-        cnt += 1
-
-    if cnt > 10:
-        return
-
-    CHATS_CNT[update.effective_chat.id] = cnt
-    for group in self.groups:
-        try:
-            for handler in (x for x in self.handlers[group] if x.check_update(update)):
-                handler.handle_update(update, self)
-                break
-
-        # Stop processing with any other handler.
-        except DispatcherHandlerStop:
-            self.logger.debug('Stopping further handlers due to DispatcherHandlerStop')
-            break
-
-        # Dispatch any error.
-        except TelegramError as te:
-            self.logger.warning('A TelegramError was raised while processing the Update')
-
-            try:
-                self.dispatch_error(update, te)
-            except DispatcherHandlerStop:
-                self.logger.debug('Error handler stopped further handlers')
-                break
-            except Exception:
-                self.logger.exception('An uncaught error was raised while handling the error')
-
-        # Errors should not stop the thread.
-        except Exception:
-            self.logger.exception('An uncaught error was raised while processing the update')
 
 
 if __name__ == '__main__':
